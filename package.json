@@ -1,0 +1,49 @@
+{
+    "name": "file-tree-walker-ts",
+    "version": "1.0.0",
+    "description": "File tree walker written in TypeScript.",
+    "author": "o-su",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/o-su/file-tree-walker-ts.git"
+    },
+    "bugs": {
+        "url": "https://github.com/o-su/file-tree-walker-ts/issues"
+    },
+    "homepage": "https://github.com/o-su/file-tree-walker-ts",
+    "keywords": [
+        "filesystem",
+        "TypeScript",
+        "files",
+        "find",
+        "walk",
+        "directory",
+        "recursive",
+        "traversal",
+        "directory tree"
+    ],
+    "files": [
+        "dist"
+    ],
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "test": "jest --config jestconfig.json"
+    },
+    "devDependencies": {
+        "typescript": "*",
+        "@types/node": "*",
+        "@types/jest": "*",
+        "jest": "*",
+        "ts-jest": "*",
+        "prettier": "*"
+    },
+    "prettier": {
+        "useTabs": false,
+        "tabWidth": 4,
+        "printWidth": 100,
+        "singleQuote": false
+    }
+}

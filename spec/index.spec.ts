@@ -128,20 +128,16 @@ describe("when root directory contains multiple subdirectories", () => {
     });
 });
 
-function mockFsReaddir(getReturnValue: (directoryPath: string) => string[]) {
-    spyOn(fs.promises, "readdir").and.callFake((directoryPath) => {
-        return new Promise((resolve) => resolve(getReturnValue(directoryPath)));
-    });
+function mockFsReaddir(getReturnValue: (directoryPath: string) => string[]): void {
+    spyOn(fs.promises, "readdir").and.callFake((directoryPath) =>
+        Promise.resolve(getReturnValue(directoryPath))
+    );
 }
 
-function mockFsStat(getReturnValue: () => object) {
-    spyOn(fs, "stat").and.callFake((_directoryPath, callback) => {
-        callback(undefined, getReturnValue());
-    });
+function mockFsStat(getReturnValue: () => object): void {
+    spyOn(fs.promises, "stat").and.callFake(() => Promise.resolve(getReturnValue()));
 }
 
 function mockFsReadFile(getReturnValue: () => string) {
-    spyOn(fs, "readFile").and.callFake((_directoryPath, _encoding, callback) => {
-        callback(undefined, getReturnValue());
-    });
+    spyOn(fs.promises, "readFile").and.callFake(() => Promise.resolve(getReturnValue()));
 }

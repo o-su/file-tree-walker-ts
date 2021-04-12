@@ -43,14 +43,14 @@ export class FileTreeWalker {
     };
 
     walk = async (directoryPath: string): Promise<void> => {
-        return fs.promises.readdir(directoryPath).then((files: string[]) => {
-            files.forEach((filename: string) => this.handleFile(directoryPath, filename));
-
-            return;
+        return fs.promises.readdir(directoryPath).then(async (files: string[]) => {
+            await Promise.all(
+                files.map(async (filename: string) => this.handleFile(directoryPath, filename))
+            );
         });
     };
 
-    private handleFile = (directoryPath: string, filename: string) => {
+    private handleFile = async (directoryPath: string, filename: string): Promise<void> => {
         const filePath: string = path.join(directoryPath, filename);
         const isExcludedFilename: boolean = this.excludedFiles.some((excludedFileName) =>
             filePath.includes(excludedFileName)
@@ -59,26 +59,25 @@ export class FileTreeWalker {
         if (!isExcludedFilename) {
             const fileExtension: string = path.extname(filename);
             const fileNameWithoutExtension: string = path.basename(filename, fileExtension);
+            const stats = await this.readFileInfo(filePath);
 
-            this.readFileInfo(filePath, (stats: fs.Stats | fs.BigIntStats) => {
-                if (stats.isDirectory()) {
-                    this.onDirectoryHandler?.(filePath, filename);
-                    this.walk(filePath);
-                } else if (
-                    stats.isFile() &&
-                    this.isAllowedFileType(fileExtension) &&
-                    this.onFileHandler
-                ) {
-                    this.readFile(filePath, (data: string | Buffer) => {
-                        this.onFileHandler?.(
-                            filePath,
-                            fileNameWithoutExtension,
-                            fileExtension,
-                            data.toString()
-                        );
-                    });
-                }
-            });
+            if (stats.isDirectory()) {
+                this.onDirectoryHandler?.(filePath, filename);
+                await this.walk(filePath);
+            } else if (
+                stats.isFile() &&
+                this.isAllowedFileType(fileExtension) &&
+                this.onFileHandler
+            ) {
+                const data: string | Buffer = await this.readFile(filePath);
+
+                this.onFileHandler?.(
+                    filePath,
+                    fileNameWithoutExtension,
+                    fileExtension,
+                    data.toString()
+                );
+            }
         }
     };
 
@@ -92,33 +91,11 @@ export class FileTreeWalker {
         return true;
     };
 
-    private readFile = (filePath: string, onSuccess: (data: string | Buffer) => void): void => {
-        fs.readFile(
-            filePath,
-            this.fileEncoding,
-            (error: NodeJS.ErrnoException | null, data: string | Buffer) => {
-                if (error) {
-                    throw new Error(error.toString());
-                }
-
-                onSuccess(data);
-            }
-        );
+    private readFile = async (filePath: string): Promise<string | Buffer> => {
+        return fs.promises.readFile(filePath, { encoding: this.fileEncoding as BufferEncoding });
     };
 
-    private readFileInfo = (
-        filePath: string,
-        onSuccess: (stats: fs.Stats | fs.BigIntStats) => void
-    ): void => {
-        fs.stat(
-            filePath,
-            (error: NodeJS.ErrnoException | null, stats: fs.Stats | fs.BigIntStats) => {
-                if (error) {
-                    throw new Error(error.toString());
-                }
-
-                onSuccess(stats);
-            }
-        );
+    private readFileInfo = (filePath: string): Promise<fs.Stats | fs.BigIntStats> => {
+        return fs.promises.stat(filePath);
     };
 }

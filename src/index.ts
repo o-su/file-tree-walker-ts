@@ -42,13 +42,11 @@ export class FileTreeWalker {
         return this;
     };
 
-    walk = (directoryPath: string): void => {
-        fs.readdir(directoryPath, (error: NodeJS.ErrnoException | null, files: string[]) => {
-            if (error) {
-                throw new Error(error.toString());
-            }
-
+    walk = async (directoryPath: string): Promise<void> => {
+        return fs.promises.readdir(directoryPath).then((files: string[]) => {
             files.forEach((filename: string) => this.handleFile(directoryPath, filename));
+
+            return;
         });
     };
 

@@ -1,6 +1,6 @@
 {
     "name": "file-tree-walker-ts",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "description": "File tree walker written in TypeScript.",
     "author": "o-su",
     "license": "MIT",

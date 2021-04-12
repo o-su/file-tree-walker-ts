@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { FileTreeWalker } from "../src/index";
 
 describe("when root directory contains one file", () => {
-    test("then FileTreeWalker finds this file and returns data", () => {
+    test("then FileTreeWalker finds this file and returns data", (done) => {
         // given
         const fileTreeWalker: FileTreeWalker = new FileTreeWalker();
         mockFsReaddir(() => ["file.txt"]);
@@ -20,12 +20,13 @@ describe("when root directory contains one file", () => {
                     expect(content).toBe("content");
                 }
             )
-            .walk("path");
+            .walk("path")
+            .then(done);
     });
 });
 
 describe("when only certain file type is allowed", () => {
-    test("then FileTreeWalker finds files with allowed file type and returns data", () => {
+    test("then FileTreeWalker finds files with allowed file type and returns data", (done) => {
         // given
         const fileTreeWalker: FileTreeWalker = new FileTreeWalker();
         mockFsReaddir(() => ["file.txt", "file.ts"]);
@@ -43,12 +44,13 @@ describe("when only certain file type is allowed", () => {
                     expect(content).toBe("content");
                 }
             )
-            .walk("path");
+            .walk("path")
+            .then(done);
     });
 });
 
 describe("when some file path is not allowed", () => {
-    test("then FileTreeWalker finds allowed files and returns data", () => {
+    test("then FileTreeWalker finds allowed files and returns data", (done) => {
         // given
         const fileTreeWalker: FileTreeWalker = new FileTreeWalker();
         mockFsReaddir(() => ["file.txt", "file2.txt"]);
@@ -66,12 +68,13 @@ describe("when some file path is not allowed", () => {
                     expect(content).toBe("content");
                 }
             )
-            .walk("path");
+            .walk("path")
+            .then(done);
     });
 });
 
 describe("when root directory contains subdirectory", () => {
-    test("then FileTreeWalker finds subdirectory and returns data", () => {
+    test("then FileTreeWalker finds subdirectory and returns data", (done) => {
         // given
         const fileTreeWalker: FileTreeWalker = new FileTreeWalker();
         mockFsReaddir((path) => {
@@ -89,12 +92,13 @@ describe("when root directory contains subdirectory", () => {
                 expect(directoryPath).toBe("path\\subdir");
                 expect(directoryName).toBe("subdir");
             })
-            .walk("path");
+            .walk("path")
+            .then(done);
     });
 });
 
 describe("when root directory contains multiple subdirectories", () => {
-    test("then FileTreeWalker finds all subdirectories and returns data", () => {
+    test("then FileTreeWalker finds all subdirectories and returns data", (done) => {
         // given
         const fileTreeWalker: FileTreeWalker = new FileTreeWalker();
         mockFsReaddir((path) => {
@@ -115,23 +119,27 @@ describe("when root directory contains multiple subdirectories", () => {
                     foundSubdir2 = true;
                 }
             })
-            .walk("path");
-
-        // then
-        expect(foundSubdir2).toBeTruthy();
+            .walk("path")
+            .then(() => {
+                // then
+                expect(foundSubdir2).toBeTruthy();
+                done();
+            });
     });
 });
 
 function mockFsReaddir(getReturnValue: (directoryPath: string) => string[]) {
-    spyOn(fs, "readdir").and.callFake((directoryPath, callback) => {
-        callback(undefined, getReturnValue(directoryPath));
+    spyOn(fs.promises, "readdir").and.callFake((directoryPath) => {
+        return new Promise((resolve) => resolve(getReturnValue(directoryPath)));
     });
 }
+
 function mockFsStat(getReturnValue: () => object) {
     spyOn(fs, "stat").and.callFake((_directoryPath, callback) => {
         callback(undefined, getReturnValue());
     });
 }
+
 function mockFsReadFile(getReturnValue: () => string) {
     spyOn(fs, "readFile").and.callFake((_directoryPath, _encoding, callback) => {
         callback(undefined, getReturnValue());

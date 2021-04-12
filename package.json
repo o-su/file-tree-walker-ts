@@ -30,7 +30,8 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
-        "test": "jest --config jestconfig.json"
+        "test": "jest --config jestconfig.json",
+        "prepack": "npm install && npm run build && npm run test"
     },
     "devDependencies": {
         "typescript": "*",

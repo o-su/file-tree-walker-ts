@@ -43,59 +43,57 @@ export class FileTreeWalker {
     };
 
     walk = async (directoryPath: string): Promise<void> => {
-        return fs.promises.readdir(directoryPath, {withFileTypes: false}).then(async (files: string[]) => {
-            await Promise.all(
-                files.map(async (filename: string) => this.handleFile(directoryPath, filename))
-            );
-        });
+        const files: string[] = await fs.promises.readdir(directoryPath, { withFileTypes: false });
+
+        await Promise.all(
+            files.map(async (filename: string) => this.processFile(directoryPath, filename)),
+        );
     };
 
-    private handleFile = async (directoryPath: string, filename: string): Promise<void> => {
+    private processFile = async (directoryPath: string, filename: string): Promise<void> => {
         const filePath: string = path.join(directoryPath, filename);
         const isExcludedFilename: boolean = this.excludedFiles.some((excludedFileName) =>
-            filePath.includes(excludedFileName)
+            filePath.includes(excludedFileName),
         );
 
         if (!isExcludedFilename) {
-            const fileExtension: string = path.extname(filename);
-            const fileNameWithoutExtension: string = path.basename(filename, fileExtension);
-            const stats = await this.readFileInfo(filePath);
+            this.processAllowedFile(filePath, filename);
+        }
+    };
 
-            if (stats.isDirectory()) {
-                this.onDirectoryHandler?.(filePath, filename);
-                await this.walk(filePath);
-            } else if (
-                stats.isFile() &&
-                this.isAllowedFileType(fileExtension) &&
-                this.onFileHandler
-            ) {
-                const data: string | Buffer = await this.readFile(filePath);
+    private processAllowedFile = async (filePath: string, filename: string): Promise<void> => {
+        const fileExtension: string = path.extname(filename);
+        const fileNameWithoutExtension: string = path.basename(filename, fileExtension);
+        const stats = await this.readFileInfo(filePath);
 
-                this.onFileHandler?.(
-                    filePath,
-                    fileNameWithoutExtension,
-                    fileExtension,
-                    data.toString()
-                );
-            }
+        if (stats.isDirectory()) {
+            this.onDirectoryHandler?.(filePath, filename);
+            await this.walk(filePath);
+        } else if (stats.isFile() && this.isAllowedFileType(fileExtension) && this.onFileHandler) {
+            const data: string | Buffer = await this.readFile(filePath);
+
+            this.onFileHandler?.(
+                filePath,
+                fileNameWithoutExtension,
+                fileExtension,
+                data.toString(),
+            );
         }
     };
 
     private isAllowedFileType = (fileType: string): boolean => {
         if (this.allowedFileTypes.length > 0) {
             return this.allowedFileTypes.some(
-                (allowedFileType) => fileType.replace(".", "") === allowedFileType
+                (allowedFileType) => fileType.replace(".", "") === allowedFileType,
             );
         }
 
         return true;
     };
 
-    private readFile = async (filePath: string): Promise<string | Buffer> => {
-        return fs.promises.readFile(filePath, { encoding: this.fileEncoding as BufferEncoding });
-    };
+    private readFile = async (filePath: string): Promise<string | Buffer> =>
+        fs.promises.readFile(filePath, { encoding: this.fileEncoding as BufferEncoding });
 
-    private readFileInfo = (filePath: string): Promise<fs.Stats | fs.BigIntStats> => {
-        return fs.promises.stat(filePath);
-    };
+    private readFileInfo = (filePath: string): Promise<fs.Stats | fs.BigIntStats> =>
+        fs.promises.stat(filePath);
 }

@@ -43,7 +43,7 @@ export class FileTreeWalker {
     };
 
     walk = async (directoryPath: string): Promise<void> => {
-        return fs.promises.readdir(directoryPath).then(async (files: string[]) => {
+        return fs.promises.readdir(directoryPath, {withFileTypes: false}).then(async (files: string[]) => {
             await Promise.all(
                 files.map(async (filename: string) => this.handleFile(directoryPath, filename))
             );

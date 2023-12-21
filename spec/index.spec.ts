@@ -7,7 +7,8 @@ describe("when root directory contains one file", () => {
         // given
         const fileTreeWalker: FileTreeWalker = new FileTreeWalker();
         mockFsReaddir(() => ["file.txt"]);
-        mockFsStat(() => ({ isDirectory: () => false, isFile: () => true }));
+        mockFsStat(() => ({ isDirectory: () => false, isFile: () => true } as fs.Stats) );
+
         mockFsReadFile(() => "content");
 
         // when, then
@@ -30,7 +31,7 @@ describe("when only certain file type is allowed", () => {
         // given
         const fileTreeWalker: FileTreeWalker = new FileTreeWalker();
         mockFsReaddir(() => ["file.txt", "file.ts"]);
-        mockFsStat(() => ({ isDirectory: () => false, isFile: () => true }));
+        mockFsStat(() => ({ isDirectory: () => false, isFile: () => true } as fs.Stats));
         mockFsReadFile(() => "content");
 
         // when, then
@@ -54,7 +55,7 @@ describe("when some file path is not allowed", () => {
         // given
         const fileTreeWalker: FileTreeWalker = new FileTreeWalker();
         mockFsReaddir(() => ["file.txt", "file2.txt"]);
-        mockFsStat(() => ({ isDirectory: () => false, isFile: () => true }));
+        mockFsStat(() => ({ isDirectory: () => false, isFile: () => true } as fs.Stats));
         mockFsReadFile(() => "content");
 
         // when, then
@@ -83,7 +84,7 @@ describe("when root directory contains subdirectory", () => {
             }
             return [];
         });
-        mockFsStat(() => ({ isDirectory: () => true, isFile: () => false }));
+        mockFsStat(() => ({ isDirectory: () => true, isFile: () => false } as fs.Stats));
         mockFsReadFile(() => "content");
 
         // when, then
@@ -109,7 +110,7 @@ describe("when root directory contains multiple subdirectories", () => {
             }
             return [];
         });
-        mockFsStat(() => ({ isDirectory: () => true, isFile: () => false }));
+        mockFsStat(() => ({ isDirectory: () => true, isFile: () => false } as fs.Stats));
         let foundSubdir2: boolean = false;
 
         // when
@@ -128,16 +129,16 @@ describe("when root directory contains multiple subdirectories", () => {
     });
 });
 
-function mockFsReaddir(getReturnValue: (directoryPath: string) => string[]): void {
-    spyOn(fs.promises, "readdir").and.callFake((directoryPath) =>
-        Promise.resolve(getReturnValue(directoryPath))
+function mockFsReaddir(getReturnValue: (directoryPath: fs.PathLike) => string[]): void {
+    jest.spyOn(fs.promises, "readdir").mockImplementation((directoryPath) =>
+        Promise.resolve(getReturnValue(directoryPath) as any)
     );
 }
 
-function mockFsStat(getReturnValue: () => object): void {
-    spyOn(fs.promises, "stat").and.callFake(() => Promise.resolve(getReturnValue()));
+function mockFsStat(getReturnValue: () => fs.Stats): void {
+    jest.spyOn(fs.promises, "stat").mockImplementation(() => Promise.resolve(getReturnValue()));
 }
 
 function mockFsReadFile(getReturnValue: () => string) {
-    spyOn(fs.promises, "readFile").and.callFake(() => Promise.resolve(getReturnValue()));
+    jest.spyOn(fs.promises, "readFile").mockImplementation(() => Promise.resolve(getReturnValue()));
 }
